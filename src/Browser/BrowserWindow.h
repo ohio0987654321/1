@@ -10,6 +10,7 @@
 
 @class ToolbarView;
 @class AddressBarView;
+@class TabManager;
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -22,8 +23,11 @@ NS_ASSUME_NONNULL_BEGIN
 /// The toolbar containing navigation controls and address bar
 @property (nonatomic, readonly) ToolbarView *toolbarView;
 
-/// The web view for displaying content
+/// The web view for displaying content (current tab's web view)
 @property (nonatomic, readonly) WKWebView *webView;
+
+/// Tab manager for this window
+@property (nonatomic, readonly) TabManager *tabManager;
 
 /**
  * Creates a new browser window with default configuration.

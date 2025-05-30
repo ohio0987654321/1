@@ -3,20 +3,23 @@
 //  StealthKit
 //
 //  Created on Phase 2: Core Browser Implementation
+//  Updated on Multi-Tab Implementation
 //
 
 #import "BrowserWindow.h"
 #import "ToolbarView.h"
 #import "AddressBarView.h"
+#import "TabBarView.h"
+#import "TabManager.h"
 #import "URLHelper.h"
 #import "SearchEngineManager.h"
 
-@interface BrowserWindow () <AddressBarViewDelegate, WKNavigationDelegate>
+@interface BrowserWindow () <AddressBarViewDelegate, WKNavigationDelegate, TabBarViewDelegate>
 @property (nonatomic, strong) ToolbarView *toolbarView;
-@property (nonatomic, strong) WKWebView *webView;
-@property (nonatomic, strong) NSSearchField *findField;
+@property (nonatomic, strong) TabBarView *tabBarView;
+@property (nonatomic, strong) TabManager *tabManager;
+@property (nonatomic, strong) NSView *webViewContainer;
 @property (nonatomic, strong) NSString *currentFindTerm;
-@property (nonatomic) BOOL findInterfaceVisible;
 @end
 
 @implementation BrowserWindow
@@ -35,6 +38,7 @@
     [window setupWindow];
     [window setupViews];
     [window setupLayout];
+    [window setupTabManager];
     
     return window;
 }
@@ -58,17 +62,18 @@
     self.toolbarView = [ToolbarView createToolbarView];
     self.toolbarView.addressBar.addressBarDelegate = self;
     
-    // Create web view with configuration
-    WKWebViewConfiguration *config = [[WKWebViewConfiguration alloc] init];
-    config.websiteDataStore = [WKWebsiteDataStore defaultDataStore]; // For now, use default store
+    // Create tab bar
+    self.tabBarView = [TabBarView createTabBarView];
+    self.tabBarView.delegate = self;
     
-    self.webView = [[WKWebView alloc] initWithFrame:NSZeroRect configuration:config];
-    self.webView.navigationDelegate = self;
-    self.webView.translatesAutoresizingMaskIntoConstraints = NO;
+    // Create web view container
+    self.webViewContainer = [[NSView alloc] init];
+    self.webViewContainer.translatesAutoresizingMaskIntoConstraints = NO;
     
     // Add views to hierarchy
     [mainContentView addSubview:self.toolbarView];
-    [mainContentView addSubview:self.webView];
+    [mainContentView addSubview:self.tabBarView];
+    [mainContentView addSubview:self.webViewContainer];
 }
 
 - (void)setupLayout {
@@ -78,41 +83,72 @@
         [self.toolbarView.leadingAnchor constraintEqualToAnchor:self.contentView.leadingAnchor],
         [self.toolbarView.trailingAnchor constraintEqualToAnchor:self.contentView.trailingAnchor],
         
-        // Web view fills remaining space
-        [self.webView.topAnchor constraintEqualToAnchor:self.toolbarView.bottomAnchor],
-        [self.webView.leadingAnchor constraintEqualToAnchor:self.contentView.leadingAnchor],
-        [self.webView.trailingAnchor constraintEqualToAnchor:self.contentView.trailingAnchor],
-        [self.webView.bottomAnchor constraintEqualToAnchor:self.contentView.bottomAnchor]
+        // Tab bar below toolbar
+        [self.tabBarView.topAnchor constraintEqualToAnchor:self.toolbarView.bottomAnchor],
+        [self.tabBarView.leadingAnchor constraintEqualToAnchor:self.contentView.leadingAnchor],
+        [self.tabBarView.trailingAnchor constraintEqualToAnchor:self.contentView.trailingAnchor],
+        [self.tabBarView.heightAnchor constraintEqualToConstant:36],
+        
+        // Web view container fills remaining space
+        [self.webViewContainer.topAnchor constraintEqualToAnchor:self.tabBarView.bottomAnchor],
+        [self.webViewContainer.leadingAnchor constraintEqualToAnchor:self.contentView.leadingAnchor],
+        [self.webViewContainer.trailingAnchor constraintEqualToAnchor:self.contentView.trailingAnchor],
+        [self.webViewContainer.bottomAnchor constraintEqualToAnchor:self.contentView.bottomAnchor]
     ]];
+}
+
+- (void)setupTabManager {
+    // Create tab manager
+    self.tabManager = [TabManager tabManagerForBrowserWindow:self];
+    
+    // Connect tab bar to tab manager
+    self.tabBarView.tabManager = self.tabManager;
+    
+    // Listen for tab changes
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(currentTabChanged:)
+                                                 name:@"StealthKitCurrentTabChanged"
+                                               object:self.tabManager];
+    
+    NSLog(@"BrowserWindow: Tab manager setup completed");
+}
+
+#pragma mark - Current Tab Access
+
+- (WKWebView *)webView {
+    return self.tabManager.currentTab.webView;
 }
 
 #pragma mark - Public Methods
 
 - (void)loadURL:(NSURL *)url {
-    if (url) {
-        NSURLRequest *request = [NSURLRequest requestWithURL:url];
-        [self.webView loadRequest:request];
+    if (url && self.tabManager.currentTab) {
+        [self.tabManager.currentTab loadURL:url];
     }
 }
 
 - (void)loadHTMLString:(NSString *)htmlString baseURL:(NSURL *)baseURL {
-    [self.webView loadHTMLString:htmlString baseURL:baseURL];
+    if (self.tabManager.currentTab) {
+        [self.tabManager.currentTab loadHTMLString:htmlString baseURL:baseURL];
+    }
 }
 
 - (void)goBack {
-    if (self.webView.canGoBack) {
+    if (self.webView && self.webView.canGoBack) {
         [self.webView goBack];
     }
 }
 
 - (void)goForward {
-    if (self.webView.canGoForward) {
+    if (self.webView && self.webView.canGoForward) {
         [self.webView goForward];
     }
 }
 
 - (void)reload {
-    [self.webView reload];
+    if (self.webView) {
+        [self.webView reload];
+    }
 }
 
 #pragma mark - Find Functionality
@@ -123,7 +159,7 @@
     alert.informativeText = @"Enter text to search for:";
     
     NSTextField *input = [[NSTextField alloc] initWithFrame:NSMakeRect(0, 0, 200, 24)];
-    input.stringValue = self.currentFindTerm ?: @"";
+    input.stringValue = self.currentFindTerm ? self.currentFindTerm : @"";
     alert.accessoryView = input;
     
     [alert addButtonWithTitle:@"Find"];
@@ -162,6 +198,8 @@
 }
 
 - (void)useSelectionForFind {
+    if (!self.webView) return;
+    
     // Get current selection from WebView
     [self.webView evaluateJavaScript:@"window.getSelection().toString()" completionHandler:^(id result, NSError *error) {
         if (!error && [result isKindOfClass:[NSString class]] && [(NSString *)result length] > 0) {
@@ -175,6 +213,8 @@
 }
 
 - (void)performFind:(NSString *)searchTerm {
+    if (!self.webView) return;
+    
     NSString *script = [NSString stringWithFormat:@"window.find('%@')", searchTerm];
     [self.webView evaluateJavaScript:script completionHandler:^(id result, NSError *error) {
         if (error) {
@@ -186,6 +226,8 @@
 }
 
 - (void)performFindPrevious:(NSString *)searchTerm {
+    if (!self.webView) return;
+    
     NSString *script = [NSString stringWithFormat:@"window.find('%@', false, true)", searchTerm];
     [self.webView evaluateJavaScript:script completionHandler:^(id result, NSError *error) {
         if (error) {
@@ -194,6 +236,45 @@
             NSLog(@"Find previous result for '%@': %@", searchTerm, result);
         }
     }];
+}
+
+#pragma mark - Tab Management
+
+- (void)switchToWebView:(WKWebView *)webView {
+    // Remove current web view from container
+    for (NSView *subview in self.webViewContainer.subviews) {
+        [subview removeFromSuperview];
+    }
+    
+    // Add new web view to container
+    if (webView) {
+        webView.translatesAutoresizingMaskIntoConstraints = NO;
+        [self.webViewContainer addSubview:webView];
+        
+        [NSLayoutConstraint activateConstraints:@[
+            [webView.topAnchor constraintEqualToAnchor:self.webViewContainer.topAnchor],
+            [webView.leadingAnchor constraintEqualToAnchor:self.webViewContainer.leadingAnchor],
+            [webView.trailingAnchor constraintEqualToAnchor:self.webViewContainer.trailingAnchor],
+            [webView.bottomAnchor constraintEqualToAnchor:self.webViewContainer.bottomAnchor]
+        ]];
+        
+        // Set navigation delegate
+        webView.navigationDelegate = self;
+    }
+}
+
+#pragma mark - TabBarViewDelegate
+
+- (void)tabBarView:(TabBarView *)tabBarView didSelectTab:(Tab *)tab {
+    [self.tabManager selectTab:tab];
+}
+
+- (void)tabBarView:(TabBarView *)tabBarView didRequestCloseTab:(Tab *)tab {
+    [self.tabManager closeTab:tab];
+}
+
+- (void)tabBarViewDidRequestNewTab:(TabBarView *)tabBarView {
+    [self.tabManager createNewTab:YES];
 }
 
 #pragma mark - AddressBarViewDelegate
@@ -207,7 +288,6 @@
 }
 
 - (NSURL *)smartURLFromUserInput:(NSString *)input {
-    // Phase 3: Use URLHelper for intelligent URL detection
     if (!input || input.length == 0) {
         return nil;
     }
@@ -239,6 +319,12 @@
 - (void)webView:(WKWebView *)webView didStartProvisionalNavigation:(WKNavigation *)navigation {
     // Update toolbar button states
     [self.toolbarView updateNavigationButtons:webView.canGoBack canGoForward:webView.canGoForward];
+    
+    // Update current tab loading state
+    Tab *currentTab = self.tabManager.currentTab;
+    if (currentTab && currentTab.webView == webView) {
+        currentTab.isLoading = YES;
+    }
 }
 
 - (void)webView:(WKWebView *)webView didFinishNavigation:(WKNavigation *)navigation {
@@ -250,12 +336,23 @@
     // Update toolbar button states
     [self.toolbarView updateNavigationButtons:webView.canGoBack canGoForward:webView.canGoForward];
     
-    // Update window title
-    if (webView.title.length > 0) {
-        self.title = [NSString stringWithFormat:@"%@ - StealthKit", webView.title];
-    } else {
-        self.title = @"StealthKit";
+    // Update current tab
+    Tab *currentTab = self.tabManager.currentTab;
+    if (currentTab && currentTab.webView == webView) {
+        currentTab.isLoading = NO;
+        currentTab.url = webView.URL;
+        
+        // Update tab title
+        if (webView.title.length > 0) {
+            currentTab.title = webView.title;
+        }
+        
+        // Update window title
+        self.title = [NSString stringWithFormat:@"%@ - StealthKit", webView.title ?: @"StealthKit"];
     }
+    
+    // Refresh tab bar to show updated titles
+    [self.tabBarView updateTabs];
 }
 
 - (void)webView:(WKWebView *)webView didFailNavigation:(WKNavigation *)navigation withError:(NSError *)error {
@@ -263,6 +360,44 @@
     
     // Update toolbar button states even on error
     [self.toolbarView updateNavigationButtons:webView.canGoBack canGoForward:webView.canGoForward];
+    
+    // Update current tab loading state
+    Tab *currentTab = self.tabManager.currentTab;
+    if (currentTab && currentTab.webView == webView) {
+        currentTab.isLoading = NO;
+    }
+}
+
+#pragma mark - Notifications
+
+- (void)currentTabChanged:(NSNotification *)notification {
+    Tab *currentTab = notification.userInfo[@"currentTab"];
+    if (currentTab) {
+        // Switch to the new tab's web view
+        [self switchToWebView:currentTab.webView];
+        
+        // Update address bar
+        if (currentTab.url) {
+            [self.toolbarView.addressBar updateWithURL:currentTab.url];
+        }
+        
+        // Update toolbar buttons
+        [self.toolbarView updateNavigationButtons:currentTab.webView.canGoBack 
+                                     canGoForward:currentTab.webView.canGoForward];
+        
+        // Update window title
+        if (currentTab.title.length > 0) {
+            self.title = [NSString stringWithFormat:@"%@ - StealthKit", currentTab.title];
+        } else {
+            self.title = @"StealthKit";
+        }
+        
+        NSLog(@"BrowserWindow: Switched to tab: %@", currentTab.title);
+    }
+}
+
+- (void)dealloc {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
 @end

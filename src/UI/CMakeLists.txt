@@ -3,6 +3,7 @@
 set(UI_SOURCES
     AddressBarView.m
     ToolbarView.m
+    TabBarView.m
     # TODO: Add in later phases:
     # MenuBuilder.m
     # StatusBarController.m
@@ -11,6 +12,7 @@ set(UI_SOURCES
 set(UI_HEADERS
     AddressBarView.h
     ToolbarView.h
+    TabBarView.h
     # TODO: Add in later phases:
     # MenuBuilder.h
     # StatusBarController.h

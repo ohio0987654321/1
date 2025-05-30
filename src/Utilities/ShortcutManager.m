@@ -7,6 +7,7 @@
 
 #import "ShortcutManager.h"
 #import "BrowserWindow.h"
+#import "TabManager.h"
 #import "ToolbarView.h"
 #import "AddressBarView.h"
 
@@ -204,8 +205,10 @@
 #pragma mark - Tab Management Handlers
 
 - (BOOL)handleNewTab {
-    if ([self.tabManager respondsToSelector:@selector(createNewTab)]) {
-        [self.tabManager performSelector:@selector(createNewTab)];
+    NSWindow *currentWindow = [NSApp keyWindow];
+    if ([currentWindow isKindOfClass:[BrowserWindow class]]) {
+        BrowserWindow *browserWindow = (BrowserWindow *)currentWindow;
+        [browserWindow.tabManager createNewTab:YES];
         return YES;
     }
     
@@ -215,15 +218,10 @@
 }
 
 - (BOOL)handleCloseTab {
-    if ([self.tabManager respondsToSelector:@selector(closeCurrentTab)]) {
-        [self.tabManager performSelector:@selector(closeCurrentTab)];
-        return YES;
-    }
-    
-    // Fallback: Close current window if no tab manager
     NSWindow *currentWindow = [NSApp keyWindow];
     if ([currentWindow isKindOfClass:[BrowserWindow class]]) {
-        [currentWindow performClose:nil];
+        BrowserWindow *browserWindow = (BrowserWindow *)currentWindow;
+        [browserWindow.tabManager closeCurrentTab];
         return YES;
     }
     
@@ -231,42 +229,46 @@
 }
 
 - (BOOL)handleReopenClosedTab {
-    if ([self.tabManager respondsToSelector:@selector(reopenLastClosedTab)]) {
-        [self.tabManager performSelector:@selector(reopenLastClosedTab)];
+    NSWindow *currentWindow = [NSApp keyWindow];
+    if ([currentWindow isKindOfClass:[BrowserWindow class]]) {
+        BrowserWindow *browserWindow = (BrowserWindow *)currentWindow;
+        [browserWindow.tabManager reopenLastClosedTab];
         return YES;
     }
     
-    NSLog(@"ShortcutManager: Reopen closed tab not yet implemented");
     return NO;
 }
 
 - (BOOL)handleNextTab {
-    if ([self.tabManager respondsToSelector:@selector(selectNextTab)]) {
-        [self.tabManager performSelector:@selector(selectNextTab)];
+    NSWindow *currentWindow = [NSApp keyWindow];
+    if ([currentWindow isKindOfClass:[BrowserWindow class]]) {
+        BrowserWindow *browserWindow = (BrowserWindow *)currentWindow;
+        [browserWindow.tabManager selectNextTab];
         return YES;
     }
     
-    NSLog(@"ShortcutManager: Next tab not yet implemented");
     return NO;
 }
 
 - (BOOL)handlePreviousTab {
-    if ([self.tabManager respondsToSelector:@selector(selectPreviousTab)]) {
-        [self.tabManager performSelector:@selector(selectPreviousTab)];
+    NSWindow *currentWindow = [NSApp keyWindow];
+    if ([currentWindow isKindOfClass:[BrowserWindow class]]) {
+        BrowserWindow *browserWindow = (BrowserWindow *)currentWindow;
+        [browserWindow.tabManager selectPreviousTab];
         return YES;
     }
     
-    NSLog(@"ShortcutManager: Previous tab not yet implemented");
     return NO;
 }
 
 - (BOOL)handleSwitchToTab:(int)tabNumber {
-    if ([self.tabManager respondsToSelector:@selector(selectTabAtIndex:)]) {
-        [self.tabManager performSelector:@selector(selectTabAtIndex:) withObject:@(tabNumber - 1)];
+    NSWindow *currentWindow = [NSApp keyWindow];
+    if ([currentWindow isKindOfClass:[BrowserWindow class]]) {
+        BrowserWindow *browserWindow = (BrowserWindow *)currentWindow;
+        [browserWindow.tabManager selectTabAtIndex:(tabNumber - 1)];
         return YES;
     }
     
-    NSLog(@"ShortcutManager: Switch to tab %d not yet implemented", tabNumber);
     return NO;
 }
 

@@ -2,10 +2,12 @@
 
 set(BROWSER_SOURCES
     BrowserWindow.m
+    TabManager.m
 )
 
 set(BROWSER_HEADERS
     BrowserWindow.h
+    TabManager.h
 )
 
 # Add sources to main target
