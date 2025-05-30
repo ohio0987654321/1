@@ -14,6 +14,9 @@
 @interface BrowserWindow () <AddressBarViewDelegate, WKNavigationDelegate>
 @property (nonatomic, strong) ToolbarView *toolbarView;
 @property (nonatomic, strong) WKWebView *webView;
+@property (nonatomic, strong) NSSearchField *findField;
+@property (nonatomic, strong) NSString *currentFindTerm;
+@property (nonatomic) BOOL findInterfaceVisible;
 @end
 
 @implementation BrowserWindow
@@ -110,6 +113,87 @@
 
 - (void)reload {
     [self.webView reload];
+}
+
+#pragma mark - Find Functionality
+
+- (void)showFindInterface {
+    NSAlert *alert = [[NSAlert alloc] init];
+    alert.messageText = @"Find in Page";
+    alert.informativeText = @"Enter text to search for:";
+    
+    NSTextField *input = [[NSTextField alloc] initWithFrame:NSMakeRect(0, 0, 200, 24)];
+    input.stringValue = self.currentFindTerm ?: @"";
+    alert.accessoryView = input;
+    
+    [alert addButtonWithTitle:@"Find"];
+    [alert addButtonWithTitle:@"Cancel"];
+    
+    [alert beginSheetModalForWindow:self completionHandler:^(NSModalResponse returnCode) {
+        if (returnCode == NSAlertFirstButtonReturn) {
+            NSString *searchTerm = input.stringValue;
+            if (searchTerm.length > 0) {
+                self.currentFindTerm = searchTerm;
+                [self performFind:searchTerm];
+            }
+        }
+    }];
+    
+    // Focus the text field
+    [input becomeFirstResponder];
+    
+    NSLog(@"BrowserWindow: Find interface shown");
+}
+
+- (void)findNext {
+    if (self.currentFindTerm.length > 0) {
+        [self performFind:self.currentFindTerm];
+    } else {
+        [self showFindInterface];
+    }
+}
+
+- (void)findPrevious {
+    if (self.currentFindTerm.length > 0) {
+        [self performFindPrevious:self.currentFindTerm];
+    } else {
+        [self showFindInterface];
+    }
+}
+
+- (void)useSelectionForFind {
+    // Get current selection from WebView
+    [self.webView evaluateJavaScript:@"window.getSelection().toString()" completionHandler:^(id result, NSError *error) {
+        if (!error && [result isKindOfClass:[NSString class]] && [(NSString *)result length] > 0) {
+            self.currentFindTerm = (NSString *)result;
+            [self performFind:self.currentFindTerm];
+            NSLog(@"BrowserWindow: Using selection for find: %@", self.currentFindTerm);
+        } else {
+            NSLog(@"BrowserWindow: No text selection found");
+        }
+    }];
+}
+
+- (void)performFind:(NSString *)searchTerm {
+    NSString *script = [NSString stringWithFormat:@"window.find('%@')", searchTerm];
+    [self.webView evaluateJavaScript:script completionHandler:^(id result, NSError *error) {
+        if (error) {
+            NSLog(@"Find error: %@", error.localizedDescription);
+        } else {
+            NSLog(@"Find result for '%@': %@", searchTerm, result);
+        }
+    }];
+}
+
+- (void)performFindPrevious:(NSString *)searchTerm {
+    NSString *script = [NSString stringWithFormat:@"window.find('%@', false, true)", searchTerm];
+    [self.webView evaluateJavaScript:script completionHandler:^(id result, NSError *error) {
+        if (error) {
+            NSLog(@"Find previous error: %@", error.localizedDescription);
+        } else {
+            NSLog(@"Find previous result for '%@': %@", searchTerm, result);
+        }
+    }];
 }
 
 #pragma mark - AddressBarViewDelegate

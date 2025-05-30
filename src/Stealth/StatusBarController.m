@@ -94,18 +94,8 @@
     
     [self.statusMenu addItem:[NSMenuItem separatorItem]];
     
-    // Browser Controls
-    [self addBrowserControlsToMenu];
-    
-    [self.statusMenu addItem:[NSMenuItem separatorItem]];
-    
     // Search Engine Selection
     [self addSearchEngineMenuToMenu];
-    
-    [self.statusMenu addItem:[NSMenuItem separatorItem]];
-    
-    // Window Management
-    [self addWindowManagementToMenu];
     
     [self.statusMenu addItem:[NSMenuItem separatorItem]];
     

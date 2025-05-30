@@ -4,11 +4,13 @@
 set(UTILITIES_SOURCES
     URLHelper.m
     SearchEngineManager.m
+    ShortcutManager.m
 )
 
 set(UTILITIES_HEADERS
     URLHelper.h
     SearchEngineManager.h
+    ShortcutManager.h
 )
 
 # Add sources to main target
@@ -25,3 +27,4 @@ target_include_directories(StealthKit PRIVATE
 message(STATUS "Utilities component configured for Phase 3")
 message(STATUS "  - URLHelper: Smart URL detection")
 message(STATUS "  - SearchEngineManager: Configurable search engines")
+message(STATUS "  - ShortcutManager: Centralized keyboard shortcuts")

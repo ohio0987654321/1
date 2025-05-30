@@ -56,6 +56,16 @@
     self.stringValue = @"";
 }
 
+- (void)focusAddressField {
+    // Make the text field first responder to focus it
+    [[self window] makeFirstResponder:self];
+    
+    // Select all text for easy overwriting
+    [self selectText:nil];
+    
+    NSLog(@"AddressBarView: Address field focused");
+}
+
 // Handle Enter key properly
 - (void)keyDown:(NSEvent *)event {
     if (event.keyCode == 36) { // Enter key

@@ -51,6 +51,11 @@ NS_ASSUME_NONNULL_BEGIN
  */
 - (void)clear;
 
+/**
+ * Focus the address bar for user input.
+ */
+- (void)focusAddressField;
+
 @end
 
 NS_ASSUME_NONNULL_END

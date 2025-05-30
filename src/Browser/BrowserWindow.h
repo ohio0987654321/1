@@ -59,6 +59,26 @@ NS_ASSUME_NONNULL_BEGIN
  */
 - (void)reload;
 
+/**
+ * Show find interface and start find operation.
+ */
+- (void)showFindInterface;
+
+/**
+ * Find next occurrence of current search term.
+ */
+- (void)findNext;
+
+/**
+ * Find previous occurrence of current search term.
+ */
+- (void)findPrevious;
+
+/**
+ * Use current selection for find operation.
+ */
+- (void)useSelectionForFind;
+
 @end
 
 NS_ASSUME_NONNULL_END

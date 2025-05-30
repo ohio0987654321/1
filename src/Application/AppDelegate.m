@@ -11,6 +11,7 @@
 #import "BrowserWindow.h"
 #import "StealthManager.h"
 #import "StatusBarController.h"
+#import "ShortcutManager.h"
 
 @implementation AppDelegate
 
@@ -57,6 +58,12 @@
     
     // Phase 4: Initialize StealthManager for Full Stealth Mode
     [[StealthManager shared] initializeStealthFeatures];
+    
+    // Initialize ShortcutManager for keyboard shortcuts
+    [[ShortcutManager shared] registerAllShortcuts];
+    
+    // Set up notification observers for shortcuts
+    [self setupShortcutNotifications];
     
     NSLog(@"StealthKit: Stealth features initialized successfully");
 }
@@ -197,6 +204,49 @@
     alert.informativeText = @"Version 1.0.0\nPrivacy-Focused Browser\nPhase 2: Core Browser Implementation\n\n© 2025 StealthKit. All rights reserved.";
     alert.alertStyle = NSAlertStyleInformational;
     [alert runModal];
+}
+
+#pragma mark - Shortcut Notifications
+
+- (void)setupShortcutNotifications {
+    NSLog(@"StealthKit: Setting up shortcut notifications...");
+    
+    // Register for new window creation notifications
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(handleNewWindowRequest:)
+                                                 name:@"StealthKitCreateNewWindow"
+                                               object:nil];
+    
+    // Register for new tab creation notifications
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(handleNewTabRequest:)
+                                                 name:@"StealthKitNewTab"
+                                               object:nil];
+    
+    NSLog(@"StealthKit: Shortcut notifications setup completed");
+}
+
+- (void)handleNewWindowRequest:(NSNotification *)notification {
+    NSLog(@"StealthKit: Creating new window via shortcut");
+    
+    // Create a new browser window
+    BrowserWindow *newWindow = (BrowserWindow *)[[StealthManager shared] createStealthBrowserWindow];
+    
+    // Load welcome page
+    NSString *welcomeHTML = [self createWelcomePageHTML];
+    [newWindow loadHTMLString:welcomeHTML baseURL:nil];
+    
+    // Show the new window
+    [newWindow makeKeyAndOrderFront:nil];
+    
+    NSLog(@"StealthKit: New window created successfully");
+}
+
+- (void)handleNewTabRequest:(NSNotification *)notification {
+    NSLog(@"StealthKit: New tab request received (multi-tab not yet implemented)");
+    
+    // For now, create a new window as fallback
+    [self handleNewWindowRequest:notification];
 }
 
 @end
