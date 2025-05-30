@@ -1,0 +1,55 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug StealthKit",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/Debug/StealthKit.app/Contents/MacOS/StealthKit",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "environment": [
+                {
+                    "name": "STEALTHKIT_DEBUG",
+                    "value": "1"
+                }
+            ],
+            "preLaunchTask": "Build Debug",
+            "internalConsoleOptions": "openOnSessionStart",
+            "console": "internalConsole",
+            "stopOnEntry": false,
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        {
+            "name": "Debug StealthKit (No Build)",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/Debug/StealthKit.app/Contents/MacOS/StealthKit",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "environment": [
+                {
+                    "name": "STEALTHKIT_DEBUG",
+                    "value": "1"
+                }
+            ],
+            "internalConsoleOptions": "openOnSessionStart",
+            "console": "internalConsole",
+            "stopOnEntry": false
+        },
+        {
+            "name": "Attach to StealthKit",
+            "type": "lldb",
+            "request": "attach",
+            "program": "${workspaceFolder}/build/Debug/StealthKit.app/Contents/MacOS/StealthKit",
+            "processId": "${command:pickProcess}",
+            "internalConsoleOptions": "openOnSessionStart"
+        }
+    ]
+}

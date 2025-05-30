@@ -1,0 +1,64 @@
+{
+    "cmake.configureOnOpen": true,
+    "cmake.buildDirectory": "${workspaceFolder}/build",
+    "cmake.generator": "Unix Makefiles",
+    "cmake.buildArgs": [
+        "--parallel", "8"
+    ],
+    "cmake.configureArgs": [
+        "-DCMAKE_BUILD_TYPE=Debug",
+        "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
+        "-DCMAKE_OSX_DEPLOYMENT_TARGET=12.0",
+        "-DCMAKE_OSX_ARCHITECTURES=arm64;x86_64"
+    ],
+    "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+    "C_Cpp.default.compileCommands": "${workspaceFolder}/compile_commands.json",
+    "C_Cpp.default.intelliSenseMode": "macos-clang-arm64",
+    "files.associations": {
+        "*.h": "objective-c",
+        "*.m": "objective-c",
+        "*.mm": "objective-cpp",
+        "*.plist": "xml",
+        "CMakeLists.txt": "cmake",
+        "*.cmake": "cmake"
+    },
+    "files.exclude": {
+        "**/build": true,
+        "**/.DS_Store": true,
+        "**/compile_commands.json": false
+    },
+    "search.exclude": {
+        "**/build": true,
+        "**/node_modules": true
+    },
+    "editor.tabSize": 4,
+    "editor.insertSpaces": true,
+    "editor.detectIndentation": false,
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+        "source.fixAll": "explicit"
+    },
+    "[objective-c]": {
+        "editor.defaultFormatter": "ms-vscode.cpptools",
+        "editor.tabSize": 4,
+        "editor.insertSpaces": true
+    },
+    "[cmake]": {
+        "editor.tabSize": 4,
+        "editor.insertSpaces": true
+    },
+    "[json]": {
+        "editor.tabSize": 2,
+        "editor.insertSpaces": true
+    },
+    "terminal.integrated.defaultProfile.osx": "zsh",
+    "terminal.integrated.cwd": "${workspaceFolder}",
+    "problems.decorations.enabled": true,
+    "clangd.arguments": [
+        "--header-insertion=never",
+        "--clang-tidy",
+        "--completion-style=detailed",
+        "--function-arg-placeholders=false"
+    ],
+    "cmake.showOptionsMovedNotification": false
+}
