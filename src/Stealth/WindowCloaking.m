@@ -99,12 +99,7 @@
         return;
     }
     
-    // Use normal window level for stealth operation
-    // We don't want to be too aggressive with window levels as it can interfere with normal operation
-    window.level = NSNormalWindowLevel;
-    
-    // Alternative: Use floating window level for more aggressive stealth
-    // window.level = NSFloatingWindowLevel;
+    window.level = NSFloatingWindowLevel;
     
     NSLog(@"StealthKit: Stealth window level applied");
 }

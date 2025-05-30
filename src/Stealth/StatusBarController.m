@@ -76,7 +76,7 @@
 }
 
 - (void)setMainBrowserWindow:(BrowserWindow *)window {
-    self.mainBrowserWindow = window;
+    _mainBrowserWindow = window;
     [self updateStatusBarMenu];
 }
 

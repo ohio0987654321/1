@@ -31,8 +31,7 @@
     cell.scrollable = YES;
     cell.wraps = NO;
     
-    // Set height constraint for proper toolbar appearance
-    [self.heightAnchor constraintEqualToConstant:28.0].active = YES;
+    // Height will be set by parent ToolbarView constraints
 }
 
 - (void)setupBehavior {

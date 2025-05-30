@@ -7,13 +7,23 @@
 //
 
 #import <Cocoa/Cocoa.h>
+#import "AppDelegate.h"
 
 int main(int argc, const char * argv[]) {
     @autoreleasepool {
         // Set process name for better identification
         [[NSProcessInfo processInfo] setProcessName:@"StealthKit"];
         
-        // Initialize and run the application
-        return NSApplicationMain(argc, argv);
+        // Create application instance
+        NSApplication *app = [NSApplication sharedApplication];
+        
+        // Create and set app delegate
+        AppDelegate *delegate = [[AppDelegate alloc] init];
+        [app setDelegate:delegate];
+        
+        // Run the application
+        [app run];
+        
+        return 0;
     }
 }

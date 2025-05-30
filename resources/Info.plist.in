@@ -24,8 +24,6 @@
     <string>@CMAKE_OSX_DEPLOYMENT_TARGET@</string>
     <key>NSHumanReadableCopyright</key>
     <string>© 2025 StealthKit. All rights reserved.</string>
-    <key>NSMainNibFile</key>
-    <string></string>
     <key>NSPrincipalClass</key>
     <string>NSApplication</string>
     

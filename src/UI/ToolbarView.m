@@ -48,11 +48,6 @@
     button.font = [NSFont systemFontOfSize:16.0 weight:NSFontWeightMedium];
     button.target = self;
     button.action = action;
-    
-    // Set fixed size for consistent appearance
-    [button.widthAnchor constraintEqualToConstant:32.0].active = YES;
-    [button.heightAnchor constraintEqualToConstant:28.0].active = YES;
-    
     button.translatesAutoresizingMaskIntoConstraints = NO;
     return button;
 }
@@ -70,6 +65,15 @@
     [NSLayoutConstraint activateConstraints:@[
         // Toolbar height
         [self.heightAnchor constraintEqualToConstant:44.0],
+        
+        // Button sizes
+        [self.backButton.widthAnchor constraintEqualToConstant:32.0],
+        [self.backButton.heightAnchor constraintEqualToConstant:28.0],
+        [self.forwardButton.widthAnchor constraintEqualToConstant:32.0],
+        [self.forwardButton.heightAnchor constraintEqualToConstant:28.0],
+        [self.reloadButton.widthAnchor constraintEqualToConstant:32.0],
+        [self.reloadButton.heightAnchor constraintEqualToConstant:28.0],
+        [self.addressBar.heightAnchor constraintEqualToConstant:28.0],
         
         // Back button
         [self.backButton.leadingAnchor constraintEqualToAnchor:self.leadingAnchor constant:8.0],

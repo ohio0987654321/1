@@ -10,11 +10,15 @@
 #import <WebKit/WebKit.h>
 #import "BrowserWindow.h"
 #import "StealthManager.h"
+#import "StatusBarController.h"
 
 @implementation AppDelegate
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
     NSLog(@"StealthKit: Application launching...");
+    
+    // Create application menu programmatically
+    [self createApplicationMenu];
     
     // Initialize stealth features
     [self initializeStealthFeatures];
@@ -51,25 +55,25 @@
 - (void)initializeStealthFeatures {
     NSLog(@"StealthKit: Initializing stealth features...");
     
-    // Phase 4: Initialize StealthManager
+    // Phase 4: Initialize StealthManager for Full Stealth Mode
     [[StealthManager shared] initializeStealthFeatures];
     
-    NSLog(@"StealthKit: Stealth features initialized");
+    NSLog(@"StealthKit: Stealth features initialized successfully");
 }
 
 #pragma mark - Window Management
 
 - (NSWindow *)createMainWindow {
-    NSLog(@"StealthKit: Creating main browser window...");
+    NSLog(@"StealthKit: Creating stealth-enabled browser window...");
     
-    // Phase 4: Create stealth-configured browser window
+    // Create stealth-enabled browser window through StealthManager
     BrowserWindow *browserWindow = (BrowserWindow *)[[StealthManager shared] createStealthBrowserWindow];
     
     // Load a welcome page
     NSString *welcomeHTML = [self createWelcomePageHTML];
     [browserWindow loadHTMLString:welcomeHTML baseURL:nil];
     
-    NSLog(@"StealthKit: Stealth browser window created");
+    NSLog(@"StealthKit: Stealth-enabled browser window created successfully");
     return browserWindow;
 }
 
@@ -78,11 +82,20 @@
 - (void)setupBackgroundOperation {
     NSLog(@"StealthKit: Setting up background operation...");
     
-    // TODO: Initialize StatusBarController in Phase 4
     // Set app activation policy to accessory (no dock icon)
-    // [NSApp setActivationPolicy:NSApplicationActivationPolicyAccessory];
-    // self.statusBarController = [[StatusBarController alloc] init];
-    // [self.statusBarController setupStatusBar];
+    [NSApp setActivationPolicy:NSApplicationActivationPolicyAccessory];
+    NSLog(@"StealthKit: App activation policy set to accessory - no dock icon");
+    
+    // Initialize StatusBarController
+    self.statusBarController = [StatusBarController shared];
+    [self.statusBarController setupStatusBar];
+    NSLog(@"StealthKit: Status bar controller initialized");
+    
+    // Connect main window to status bar controller
+    if ([self.statusBarController respondsToSelector:@selector(setMainBrowserWindow:)]) {
+        [self.statusBarController setMainBrowserWindow:(BrowserWindow *)self.mainWindow];
+        NSLog(@"StealthKit: Main window connected to status bar controller");
+    }
     
     NSLog(@"StealthKit: Background operation setup completed (placeholder)");
 }
@@ -116,6 +129,57 @@
            @"</ul>"
            @"<p>Try navigating to a website or searching for something!</p>"
            @"</body></html>";
+}
+
+#pragma mark - Menu Creation
+
+- (void)createApplicationMenu {
+    NSLog(@"StealthKit: Creating application menu...");
+    
+    // Create main menu bar
+    NSMenu *mainMenu = [[NSMenu alloc] initWithTitle:@"Main Menu"];
+    
+    // Create StealthKit (App) menu
+    NSMenuItem *appMenuItem = [[NSMenuItem alloc] init];
+    NSMenu *appMenu = [[NSMenu alloc] initWithTitle:@"StealthKit"];
+    
+    // About StealthKit
+    NSMenuItem *aboutMenuItem = [[NSMenuItem alloc] initWithTitle:@"About StealthKit" 
+                                                           action:@selector(showAbout:) 
+                                                    keyEquivalent:@""];
+    aboutMenuItem.target = self;
+    [appMenu addItem:aboutMenuItem];
+    
+    [appMenu addItem:[NSMenuItem separatorItem]];
+    
+    // Quit StealthKit
+    NSMenuItem *quitMenuItem = [[NSMenuItem alloc] initWithTitle:@"Quit StealthKit" 
+                                                          action:@selector(terminate:) 
+                                                   keyEquivalent:@"q"];
+    quitMenuItem.target = NSApp;
+    [appMenu addItem:quitMenuItem];
+    
+    appMenuItem.submenu = appMenu;
+    [mainMenu addItem:appMenuItem];
+    
+    // Create File menu
+    NSMenuItem *fileMenuItem = [[NSMenuItem alloc] init];
+    NSMenu *fileMenu = [[NSMenu alloc] initWithTitle:@"File"];
+    
+    // New Window
+    NSMenuItem *newWindowMenuItem = [[NSMenuItem alloc] initWithTitle:@"New Window" 
+                                                               action:@selector(newDocument:) 
+                                                        keyEquivalent:@"n"];
+    newWindowMenuItem.target = self;
+    [fileMenu addItem:newWindowMenuItem];
+    
+    fileMenuItem.submenu = fileMenu;
+    [mainMenu addItem:fileMenuItem];
+    
+    // Set the main menu
+    [NSApp setMainMenu:mainMenu];
+    
+    NSLog(@"StealthKit: Application menu created successfully");
 }
 
 #pragma mark - Menu Actions
