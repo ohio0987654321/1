@@ -38,7 +38,11 @@
     self.statusItem = [[NSStatusBar systemStatusBar] statusItemWithLength:NSVariableStatusItemLength];
     
     // Configure status item appearance
-    self.statusItem.button.title = @"🛡️";
+    NSImage *statusImage = [NSImage imageWithSystemSymbolName:@"network.badge.shield.half.filled" accessibilityDescription:@"StealthKit"];
+    if (statusImage) {
+        [statusImage setTemplate:YES];
+        self.statusItem.button.image = statusImage;
+    } 
     self.statusItem.button.toolTip = @"StealthKit - Privacy Browser";
     
     // Create and set menu
