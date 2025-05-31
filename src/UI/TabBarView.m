@@ -104,6 +104,9 @@
     self.wantsLayer = YES;
     self.layer.backgroundColor = [NSColor windowBackgroundColor].CGColor;
     
+    // Add minimum width constraint to prevent collapse
+    [self.widthAnchor constraintGreaterThanOrEqualToConstant:200].active = YES;
+    
     // Create scroll view for tabs
     self.tabScrollView = [[NSScrollView alloc] init];
     self.tabScrollView.translatesAutoresizingMaskIntoConstraints = NO;

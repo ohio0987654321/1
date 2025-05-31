@@ -13,6 +13,7 @@
 #import "TabManager.h"
 #import "URLHelper.h"
 #import "SearchEngineManager.h"
+#import "UIManager.h"
 
 @interface BrowserWindow () <AddressBarViewDelegate, WKNavigationDelegate, TabBarViewDelegate>
 @property (nonatomic, strong) ToolbarView *toolbarView;
@@ -77,24 +78,37 @@
 }
 
 - (void)setupLayout {
+    UIManager *uiManager = [UIManager sharedManager];
+    
+    // Ensure all views have proper constraints disabled
+    self.toolbarView.translatesAutoresizingMaskIntoConstraints = NO;
+    self.tabBarView.translatesAutoresizingMaskIntoConstraints = NO;
+    self.webViewContainer.translatesAutoresizingMaskIntoConstraints = NO;
+    
     [NSLayoutConstraint activateConstraints:@[
-        // Toolbar at top
+        // Toolbar at top - with explicit height
         [self.toolbarView.topAnchor constraintEqualToAnchor:self.contentView.topAnchor],
         [self.toolbarView.leadingAnchor constraintEqualToAnchor:self.contentView.leadingAnchor],
         [self.toolbarView.trailingAnchor constraintEqualToAnchor:self.contentView.trailingAnchor],
+        [self.toolbarView.heightAnchor constraintEqualToConstant:uiManager.toolbarHeight],
         
-        // Tab bar below toolbar
+        // Tab bar below toolbar - using UIManager constant
         [self.tabBarView.topAnchor constraintEqualToAnchor:self.toolbarView.bottomAnchor],
         [self.tabBarView.leadingAnchor constraintEqualToAnchor:self.contentView.leadingAnchor],
         [self.tabBarView.trailingAnchor constraintEqualToAnchor:self.contentView.trailingAnchor],
-        [self.tabBarView.heightAnchor constraintEqualToConstant:36],
+        [self.tabBarView.heightAnchor constraintEqualToConstant:uiManager.tabBarHeight],
         
         // Web view container fills remaining space
         [self.webViewContainer.topAnchor constraintEqualToAnchor:self.tabBarView.bottomAnchor],
         [self.webViewContainer.leadingAnchor constraintEqualToAnchor:self.contentView.leadingAnchor],
         [self.webViewContainer.trailingAnchor constraintEqualToAnchor:self.contentView.trailingAnchor],
-        [self.webViewContainer.bottomAnchor constraintEqualToAnchor:self.contentView.bottomAnchor]
+        [self.webViewContainer.bottomAnchor constraintEqualToAnchor:self.contentView.bottomAnchor],
+        
+        // Ensure web view container has minimum height to prevent collapse
+        [self.webViewContainer.heightAnchor constraintGreaterThanOrEqualToConstant:100]
     ]];
+    
+    NSLog(@"BrowserWindow: Layout constraints applied with UIManager constants");
 }
 
 - (void)setupTabManager {

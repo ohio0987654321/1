@@ -6,6 +6,7 @@
 //
 
 #import "AddressBarView.h"
+#import "UIManager.h"
 
 @interface AddressBarView ()
 @end
@@ -20,16 +21,22 @@
 }
 
 - (void)setupStyling {
-    // Safari-like appearance
-    self.bezeled = YES;
-    self.bezelStyle = NSTextFieldRoundedBezel;
-    self.placeholderString = @"Search or enter website name";
-    self.font = [NSFont systemFontOfSize:14.0];
+    // Apply styling through UIManager for consistency
+    UIManager *uiManager = [UIManager sharedManager];
+    [uiManager styleTextField:self withStyle:UITextFieldStyleAddressBar];
     
-    // Configure cell for better appearance
-    NSTextFieldCell *cell = self.cell;
-    cell.scrollable = YES;
-    cell.wraps = NO;
+    // Set placeholder after styling
+    self.placeholderString = @"Search or enter website name";
+    
+    // Add minimum width constraint to prevent collapse
+    self.translatesAutoresizingMaskIntoConstraints = NO;
+    [self.widthAnchor constraintGreaterThanOrEqualToConstant:200].active = YES;
+    
+    // Register for theme change notifications
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(themeChanged:)
+                                                 name:@"StealthKitThemeChanged"
+                                               object:nil];
     
     // Height will be set by parent ToolbarView constraints
 }
@@ -85,6 +92,21 @@
         });
     }
     return result;
+}
+
+#pragma mark - Theme Support
+
+- (void)themeChanged:(NSNotification *)notification {
+    // Reapply styling when theme changes
+    UIManager *uiManager = [UIManager sharedManager];
+    [uiManager styleTextField:self withStyle:UITextFieldStyleAddressBar];
+    
+    // Preserve placeholder text
+    self.placeholderString = @"Search or enter website name";
+}
+
+- (void)dealloc {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
 @end
