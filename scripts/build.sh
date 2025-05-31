@@ -4,87 +4,43 @@
 
 set -e
 
-# Configuration
-BUILD_TYPE=${1:-Debug}
+echo "🧹 Cleaning build artifacts..."
+
+rm -rf build compile_commands.json CMakeCache.txt CMakeFiles
+find . -name ".DS_Store" -o -name "*.tmp" -o -name "*.temp" -type f -delete 2>/dev/null || true
+
+echo "✅ Cleaned up"
+
+# Determine build type
+BUILD_TYPE=$(echo "${1:-debug}" | tr '[:upper:]' '[:lower:]')
+[[ "$BUILD_TYPE" == "debug" || "$BUILD_TYPE" == "release" ]] || {
+    echo "❌ Invalid build type: '${1}'. Use 'debug' or 'release'"
+    exit 1
+}
+BUILD_TYPE="$(tr '[:lower:]' '[:upper:]' <<< ${BUILD_TYPE:0:1})${BUILD_TYPE:1}"
 BUILD_DIR="build/${BUILD_TYPE}"
-PARALLEL_JOBS=$(sysctl -n hw.ncpu)
+JOBS=$(sysctl -n hw.ncpu)
 
-# Validate build type
-case "$(echo ${BUILD_TYPE} | tr '[:upper:]' '[:lower:]')" in
-    debug)
-        BUILD_TYPE="Debug"
-        ;;
-    release)
-        BUILD_TYPE="Release"
-        ;;
-    *)
-        echo "❌ Error: Invalid build type '${1}'. Use 'debug' or 'release'"
-        exit 1
-        ;;
-esac
+echo "🔨 Building (${BUILD_TYPE}) with ${JOBS} jobs..."
 
-echo "🔨 Building StealthKit (${BUILD_TYPE})..."
-echo "   Build Directory: ${BUILD_DIR}"
-echo "   Parallel Jobs: ${PARALLEL_JOBS}"
-echo
-
-# Create build directory
-mkdir -p "${BUILD_DIR}"
-
-# Configure with CMake
-echo "📋 Configuring CMake..."
-cmake -B "${BUILD_DIR}" \
-      -DCMAKE_BUILD_TYPE="${BUILD_TYPE}" \
+mkdir -p "$BUILD_DIR"
+cmake -B "$BUILD_DIR" \
+      -DCMAKE_BUILD_TYPE="$BUILD_TYPE" \
       -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
       -DCMAKE_OSX_DEPLOYMENT_TARGET=12.0 \
       -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64" \
       -DCMAKE_VERBOSE_MAKEFILE=OFF
 
-if [ $? -ne 0 ]; then
-    echo "❌ CMake configuration failed"
-    exit 1
-fi
+cmake --build "$BUILD_DIR" --parallel "$JOBS"
 
-echo
-echo "🔧 Building..."
+cp "$BUILD_DIR/compile_commands.json" . 2>/dev/null || true
+echo "📝 compile_commands.json updated"
 
-# Build with CMake
-cmake --build "${BUILD_DIR}" --parallel "${PARALLEL_JOBS}"
-
-if [ $? -ne 0 ]; then
-    echo "❌ Build failed"
-    exit 1
-fi
-
-echo
-echo "✅ Build completed successfully!"
-echo "   App Location: ${BUILD_DIR}/StealthKit.app"
-
-# Copy compile commands for VSCode IntelliSense
-if [ -f "${BUILD_DIR}/compile_commands.json" ]; then
-    cp "${BUILD_DIR}/compile_commands.json" .
-    echo "📝 Compile commands updated for IntelliSense"
-fi
-
-# Show app bundle info
-if [ -d "${BUILD_DIR}/StealthKit.app" ]; then
-    echo
-    echo "📦 App Bundle Information:"
-    echo "   Bundle Path: ${BUILD_DIR}/StealthKit.app"
-    echo "   Executable: ${BUILD_DIR}/StealthKit.app/Contents/MacOS/StealthKit"
-    
-    # Check if executable exists and is executable
-    if [ -x "${BUILD_DIR}/StealthKit.app/Contents/MacOS/StealthKit" ]; then
-        echo "   Status: ✅ Ready to run"
-        echo
-        echo "🚀 To launch: open ${BUILD_DIR}/StealthKit.app"
-    else
-        echo "   Status: ❌ Executable not found or not executable"
-    fi
+APP_PATH="$BUILD_DIR/StealthKit.app"
+if [ -x "$APP_PATH/Contents/MacOS/StealthKit" ]; then
+    echo "✅ Build complete: $APP_PATH"
+    echo "🚀 To launch: open $APP_PATH"
 else
-    echo "❌ App bundle not created"
+    echo "❌ Build failed: App bundle or executable missing"
     exit 1
 fi
-
-echo
-echo "🎉 StealthKit build process completed!"
